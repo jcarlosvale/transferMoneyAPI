@@ -1,5 +1,7 @@
 package com.monese.transferMoneyAPI.controller;
 
+import com.monese.transferMoneyAPI.dtos.StatementResponse;
+import com.monese.transferMoneyAPI.dtos.TransferResponse;
 import com.monese.transferMoneyAPI.service.TransferMoneyService;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
@@ -20,32 +22,32 @@ public class TransferMoneyController {
 
     @PostMapping(value = "/transfer/from/{originAccountId}/to/{destinyAccountId}/value/{value}",
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> transfer (@PathVariable("originAccountId") long originAccount,
+    public ResponseEntity<TransferResponse> transfer (@PathVariable("originAccountId") long originAccount,
                                                       @PathVariable("destinyAccountId") long destinyAccountId,
                                                       @PathVariable("value") double value) {
         try {
             return new ResponseEntity<>(service.transfer(originAccount, destinyAccountId, value), HttpStatus.OK);
         } catch (IllegalArgumentException ex) {
             log.info(ex.getMessage());
-            return new ResponseEntity<>(ex.getMessage(),HttpStatus.BAD_REQUEST);
+            return new ResponseEntity(ex.getMessage(),HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             log.severe(e.getMessage());
-            return new ResponseEntity<>("Unexpected error, contact the support and provide the used request.",
+            return new ResponseEntity("Unexpected error, contact the support and provide the used request.",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @GetMapping(value = "/getBankStatement/{accountId}",
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> getBankStatement (@PathVariable int accountId) {
+    public ResponseEntity<StatementResponse> getBankStatement (@PathVariable long accountId) {
         try {
             return new ResponseEntity<>(service.getBankStatement(accountId), HttpStatus.OK);
         } catch (IllegalArgumentException ex) {
             log.info(ex.getMessage());
-            return new ResponseEntity<>(ex.getMessage(),HttpStatus.BAD_REQUEST);
+            return new ResponseEntity(ex.getMessage(),HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             log.severe(e.getMessage());
-            return new ResponseEntity<>("Unexpected error, contact the support and provide the used request.",
+            return new ResponseEntity("Unexpected error, contact the support and provide the used request.",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

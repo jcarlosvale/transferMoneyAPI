@@ -10,6 +10,8 @@ import com.monese.transferMoneyAPI.repository.AccountRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityNotFoundException;
+import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -28,6 +30,7 @@ public class TransferMoneyService {
     private final AccountRepository accountRepository;
     private final AccountHistoryRepository accountHistoryRepository;
 
+    @Transactional
     public TransferResponse transfer(long originAccountId, long destinyAccountId, double value) {
         try{
             Account originAccount = accountRepository.getOne(originAccountId);
@@ -77,18 +80,18 @@ public class TransferMoneyService {
     }
 
     public StatementResponse getBankStatement(long accountId) {
-        try{
-            Account account = accountRepository.getOne(accountId);
-
-            if (null == account) throw new IllegalArgumentException("Account not found.");
-
+        try {
             List<AccountHistory> statement =
                     accountHistoryRepository.findAccountHistoriesByMainAccount_IdOrderByDateTimeOperationDesc(accountId);
 
+            if (statement.isEmpty()) {
+                throw new IllegalArgumentException("Statement empty");
+            }
+
             StatementResponse response = new StatementResponse();
             List<LineOfStatement> lines = new ArrayList<>();
-            response.setAccount(account);
-            for (AccountHistory accountHistory:statement) {
+            response.setAccount(accountRepository.getOne(accountId));
+            for (AccountHistory accountHistory : statement) {
                 lines.add(new LineOfStatement(
                         accountHistory.getBalanceAfterOperation(),
                         accountHistory.getTypeOperation(),
@@ -100,6 +103,8 @@ public class TransferMoneyService {
             }
             response.setOperations(lines);
             return response;
+        } catch (EntityNotFoundException ex) {
+                throw new IllegalArgumentException("ACCOUNT not found.");
         } finally {
             accountHistoryRepository.flush();
         }
